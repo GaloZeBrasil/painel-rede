@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Galo Zé — Painel da rede</title>
+<link rel="icon" href="img/frango-laranja.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--font-anthropic-sans:"Outfit",system-ui,sans-serif;--font-anthropic-serif:"Outfit",system-ui,sans-serif;
+--color-fg:#252525;--color-fg-muted:#6b6460;--color-panel:#fff;--color-border-line:#eadfd6;--color-ok:#1f8a4c;--color-warn:#d98a00;--color-bad:#B3261E;
+--cds-gap-xs:4px;--cds-gap-sm:8px;--cds-gap-md:16px;--cds-gap-lg:24px;--cds-pad-sm:8px;--cds-pad-lg:20px;--cds-radius:12px;
+--cds-font-size-caption:13px;--cds-font-size-body:15px;--cds-font-size-heading:19px;--cds-font-size-title:30px;--cds-font-weight-medium:600;
+--cds-text-secondary:#6b6460;--cds-surface-popover:#fff;--cds-border:#eadfd6;--cds-shadow-popover:0 6px 20px rgba(0,0,0,.12);--cds-chart-grid:#f0e8e0;--cds-chart-axis:#cbbfb5}
+body{margin:0;background:#FFF7EF}
+.gz-page{max-width:1280px;margin:0 auto;padding:24px}
+.gz-page:has(.tv-mode){max-width:none;padding:12px}
+.gz-h1{font-weight:800!important;color:#7A1915}
+.gz-kv{font-family:"GZ Matiz","Outfit",sans-serif!important;color:#7A1915}
+.dash-select{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--color-border-line);background:#fff}
+.dash-skeleton{opacity:.4}
+</style>
+<link rel="stylesheet" href="tv.css">
+<script src="d3.min.js"></script>
+<script src="dash.js"></script>
+</head>
+<body>
+<div class="gz-page">
+<style>
+.gz{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans);color:var(--color-fg)}
+.gz-h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0}
+.gz-lead{margin:0;color:var(--color-fg);font-size:var(--cds-font-size-body);max-width:70ch;line-height:1.5}
+.gz-bar{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);align-items:center}
+.gz-bar label{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.gz-note{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);margin:0}
+.gz-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--cds-gap-md)}
+.gz-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-xs)}
+.gz-kl{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);margin:0}
+.gz-kv{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;margin:0}
+.gz-kd{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:0}
+.gz-up{color:var(--color-ok)}.gz-down{color:var(--color-bad)}
+.gz-h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.gz-chart{position:relative;min-height:300px}
+.gz-chart svg text{fill:var(--cds-text-secondary);font-size:var(--cds-font-size-caption)}
+.gz-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);box-shadow:var(--cds-shadow-popover);border-radius:var(--cds-radius);padding:var(--cds-pad-sm);font-size:var(--cds-font-size-caption);white-space:nowrap;z-index:2}
+.gz-leg{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.gz-sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.gz-tw{overflow-x:auto}
+.gz-t{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.gz-t th,.gz-t td{padding:8px 10px;border-bottom:1px solid var(--color-border-line);text-align:right;white-space:nowrap}
+.gz-t th{color:var(--color-fg-muted);font-weight:var(--cds-font-weight-medium);cursor:pointer}
+.gz-t th:first-child,.gz-t td:first-child{text-align:left}
+.gz-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.gz-ok{background:var(--color-ok)}.gz-warn{background:var(--color-warn)}.gz-bad{background:var(--color-bad)}
+.gz-al{display:flex;flex-direction:column;gap:var(--cds-gap-xs);margin:0;padding-left:1.2em}
+.gz-al li{line-height:1.5}
+details.gz-det summary{cursor:pointer;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+details.gz-det p{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);max-width:80ch;line-height:1.5}
+</style>
+
+<div class="gz gz-root">
+  <header id="topo">
+    <h1 class="gz-h1">Galo Zé — Painel da rede</h1>
+    <p class="gz-lead">Em <b data-draw="f-mes">—</b>, a rede faturou <b data-draw="f-total" data-source="rede" data-field="total">—</b> (<span data-draw="f-var" data-source="rede" data-field="var_mm">—</span> sobre o mês anterior). A unidade que mais faturou foi <b data-draw="f-lider" data-source="ranking" data-field="unidade">—</b>, com <b data-draw="f-lider-v" data-source="ranking" data-field="total">—</b>.</p>
+  </header>
+  <button type="button" class="gz-tvbtn" id="abrir-tv">Abrir modo TV</button>
+
+  <div class="gz-bar">
+    <label for="gz-mes">Mês</label>
+    <select id="gz-mes" class="dash-select" data-draw="mes" aria-label="Mês" data-source="rede"></select>
+    <p class="gz-note" data-draw="f-nota"></p>
+  </div>
+
+  <section id="kpis" class="gz-kpis">
+    <div class="gz-card" id="k-fat"><p class="gz-kl">Faturamento da rede (loja + apps)</p><p class="gz-kv" data-draw="k-total" data-source="rede" data-field="total">—</p><p class="gz-kd"><span data-draw="k-total-var" data-source="rede" data-field="var_mm">—</span> vs mês anterior</p></div>
+    <div class="gz-card" id="k-ped"><p class="gz-kl">Pedidos</p><p class="gz-kv" data-draw="k-ped" data-source="rede" data-field="pedidos">—</p><p class="gz-kd"><span data-draw="k-ped-var" data-source="rede" data-field="var_pedidos">—</span> vs mês anterior</p></div>
+    <div class="gz-card" id="k-tk"><p class="gz-kl">Ticket médio</p><p class="gz-kv" data-draw="k-tk" data-source="rede" data-field="ticket">—</p><p class="gz-kd">faturamento ÷ pedidos</p></div>
+    <div class="gz-card" id="k-apps"><p class="gz-kl">Participação dos aplicativos</p><p class="gz-kv" data-draw="k-apps" data-source="rede" data-field="apps_pct">—</p><p class="gz-kd">iFood + 99Food no faturamento</p></div>
+  </section>
+
+  <section id="evolucao" class="gz-card">
+    <h2 class="gz-h2">Faturamento da rede mês a mês</h2>
+    <div class="gz-leg"><span><i class="gz-sw" data-draw="sw0"></i>Loja</span><span><i class="gz-sw" data-draw="sw1"></i>iFood</span><span><i class="gz-sw" data-draw="sw2"></i>99Food</span></div>
+    <div class="gz-chart" data-draw="chart" data-source="rede"></div>
+  </section>
+
+  <section id="ranking-sec" class="gz-card">
+    <h2 class="gz-h2">Unidades no mês</h2>
+    <p class="gz-note">Clique no título de uma coluna para ordenar. O sinal de cada unidade junta os alertas abaixo: verde sem alerta, amarelo com um, vermelho com dois ou mais.</p>
+    <div class="gz-tw">
+      <table class="gz-t" data-source="ranking" data-row-key="unidade,mes">
+        <thead><tr>
+          <th data-field="unidade" data-sort="unidade">Unidade</th>
+          <th data-field="total" data-sort="total">Faturamento</th>
+          <th data-field="var_mm" data-sort="var_mm">Var. m/m</th>
+          <th data-field="pedidos" data-sort="pedidos">Pedidos</th>
+          <th data-field="ticket" data-sort="ticket">Ticket</th>
+          <th data-field="apps_pct" data-sort="apps_pct">Apps</th>
+          <th data-field="promo_ifood" data-sort="promo_ifood">Promoções iFood (out)</th>
+          <th data-field="nota_google" data-sort="nota_google">Google</th>
+          <th data-field="nota_ifood" data-sort="nota_ifood">iFood</th>
+          <th data-field="posts_out" data-sort="posts_out">Posts Instagram (out)</th>
+        </tr></thead>
+        <tbody data-draw="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="alertas" class="gz-card">
+    <h2 class="gz-h2">Alertas do mês</h2>
+    <p class="gz-note">Queda de 10% ou mais no faturamento sobre o mês anterior, nota no Google abaixo de 4,5, promoções acima de 18% das vendas do iFood, ou menos de 4 posts no Instagram em outubro (a meta da rede).</p>
+    <ul class="gz-al" data-draw="alertas" data-source="ranking"></ul>
+  </section>
+
+  <details class="gz-det" id="notas">
+    <summary>De onde vêm os números</summary>
+    <p>Loja: Consumer, sem os pedidos que entram pelo DeliveryHub (que são de aplicativo). iFood: Portal do Parceiro, Financeiro (valor das vendas antes de taxas e promoções). 99Food: portal 99Food, que só mostra os últimos 90 dias; por isso Fazenda Rio Grande e Tatuquara só têm 99Food de setembro em diante, e em Goiânia os meses de fevereiro a agosto são o DeliveryHub menos o iFood. Notas do Google consultadas em 24/11/2026; notas do iFood são dos últimos 90 dias. Posts do Instagram contados no perfil público, que mostra só as 12 publicações mais recentes. Promoções e faturamento líquido do iFood são de outubro de 2026. Juara, Bragança Paulista, Botucatu e Uberlândia ficaram de fora por falta de dados no Consumer.</p>
+  </details>
+  <section class="tv" id="tv">
+    <div class="tv-bar"><button type="button" class="tv-full">Tela cheia</button><button type="button" class="tv-exit">Sair do modo TV</button></div>
+    <div class="tv-stage">
+      <i data-draw="tv-rot"></i>
+      <div class="tv-slide tv-red tv-cover" id="tv-capa">
+        <img class="tv-chicken" src="img/frango-laranja.png" alt="">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">Resultado da rede no mês</p>
+        <p class="tv-h"><span data-draw="tv-mes">—</span>, até <span data-draw="tv-ate">—</span></p>
+        <p class="tv-num tv-big" data-draw="tv-total" data-source="rede_atual" data-field="total" data-row="0">—</p>
+        <p class="tv-sub">faturados pelas <span data-draw="tv-nunid" data-source="rede_atual" data-field="unidades" data-row="0">—</span> unidades, somando loja, iFood e 99Food.</p>
+      </div>
+      <div class="tv-slide tv-cream" id="tv-hoje">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">Vendas do dia</p>
+        <p class="tv-h" data-draw="hj-tit">—</p>
+        <div class="hj-top">
+          <div class="hj-k"><small>Faturamento</small><span class="tv-num" data-draw="hj-valor" data-source="hoje_rede" data-field="valor" data-row="0">—</span></div>
+          <div class="hj-k"><small>Pedidos</small><span class="tv-num" data-draw="hj-ped" data-source="hoje_rede" data-field="pedidos" data-row="0">—</span></div>
+          <div class="hj-k"><small>Ticket médio</small><span class="tv-num" data-draw="hj-tk" data-source="hoje_rede" data-field="ticket" data-row="0">—</span></div>
+          <div class="hj-canais" data-draw="hj-canais" data-source="hoje_rede"></div>
+        </div>
+        <div class="hj-wrap" data-draw="hj-tab" data-source="hoje_un hoje_entrega"></div>
+      </div>
+      <div class="tv-slide tv-black" id="tv-ritmo">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">O mês até agora</p>
+        <p class="tv-h">Ritmo da rede comparado com o mês anterior</p>
+        <div class="tv-tiles">
+          <div class="tv-tile"><p class="tv-kl">Faturamento por dia</p><p class="tv-num" data-draw="tv-pordia" data-source="rede_atual" data-field="por_dia" data-row="0">—</p><p class="tv-kd"><span data-draw="tv-pordia-v" data-source="rede_atual" data-field="ritmo_pct" data-row="0">—</span> vs média diária do mês anterior</p></div>
+          <div class="tv-tile"><p class="tv-kl">Pedidos no mês</p><p class="tv-num" data-draw="tv-ped" data-source="rede_atual" data-field="pedidos" data-row="0">—</p><p class="tv-kd"><span data-draw="tv-ped-v" data-source="rede_atual" data-field="pedidos_dia_pct" data-row="0">—</span> em pedidos por dia</p></div>
+          <div class="tv-tile"><p class="tv-kl">Ticket médio</p><p class="tv-num" data-draw="tv-tk" data-source="rede_atual" data-field="ticket" data-row="0">—</p><p class="tv-kd"><span data-draw="tv-tk-v" data-source="rede_atual" data-field="ticket_pct" data-row="0">—</span> vs mês anterior</p></div>
+          <div class="tv-tile"><p class="tv-kl">Vendas em aplicativos</p><p class="tv-num" data-draw="tv-apps" data-source="rede_atual" data-field="apps_pct" data-row="0">—</p><p class="tv-kd">do faturamento vem de iFood e 99Food</p></div>
+        </div>
+      </div>
+      <div class="tv-slide tv-cream" id="tv-ranking">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">Ranking do mês · meta = mês anterior + <span data-draw="meta-pct">—</span></p>
+        <p class="tv-h">Faturamento e quanto falta para a meta</p>
+        <div class="tv-chart" data-draw="tv-rank" data-source="metas"></div>
+      </div>
+      <div class="tv-slide tv-black" id="tv-cresc">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">Quem acelerou e quem desacelerou</p>
+        <p class="tv-h">Faturamento por dia vs mês anterior</p>
+        <div class="tv-chart" data-draw="tv-ritmo-ch" data-source="mes_atual"></div>
+      </div>
+      <div class="tv-slide tv-cream" id="tv-apps">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">Canais de venda</p>
+        <p class="tv-h">Quanto de cada unidade vem dos aplicativos</p>
+        <div class="tv-chart" data-draw="tv-apps-ch" data-source="mes_atual"></div>
+      </div>
+      <div class="tv-slide tv-black" id="tv-aval">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">Avaliações dos clientes · meta 4,5 ou mais</p>
+        <p class="tv-h">Notas no Google e no iFood</p>
+        <div class="tv-grid" data-draw="tv-notas" data-source="unidades"></div>
+      </div>
+      <div class="tv-slide tv-orange" id="tv-alertas">
+        <img class="tv-logo" src="img/logo-laranja.png" alt="Logo Galo Zé">
+        <p class="tv-eb">Atenção da consultoria</p>
+        <p class="tv-h">Unidades com alerta</p>
+        <ul class="tv-list" data-draw="tv-al" data-source="mes_atual"></ul>
+      </div>
+      <div class="tv-dots" data-draw="tv-dots"></div>
+      <p class="tv-foot" data-draw="tv-foot">—</p>
+    </div>
+  </section>
+</div>
+
+<script>
+window.gzL = d3.formatLocale({decimal: ',', thousands: '.', grouping: [3], currency: ['R$ ', '']});
+window.gzR = (v) => gzL.format('$,.0f')(v);
+window.gzR2 = (v) => gzL.format('$,.2f')(v);
+window.gzN = (v) => gzL.format(',.0f')(v);
+window.gzP = (v) => (v == null || isNaN(v)) ? '—' : gzL.format('+,.1f')(v).replace('-', '−') + '%';
+window.gzP0 = (v) => gzL.format(',.1f')(v) + '%';
+window.gzMeses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+window.gzDias = (m) => { const d = dash.data('vendas'); return d.status === 'ok' ? d3.max(d.data.filter((r) => r.mes === m), (r) => +r.dias) : null; };
+window.gzCompleto = (m) => { const d = gzDias(m); return d != null && d >= new Date(+m.slice(0, 4), +m.slice(5), 0).getDate(); };
+window.gzNomeMes = (m) => { const d = gzDias(m); return gzMeses[+m.slice(5) - 1] + (d != null && !gzCompleto(m) ? ' (até ' + String(d).padStart(2, '0') + '/' + m.slice(5) + ')' : ''); };
+window.gzMes = window.gzMes || null;
+window.dashBeforeDraw = () => { if (!window.gzMes) window.gzMes = gzMesPadrao(); };
+window.gzMesPadrao = () => { const d = dash.data('vendas'); if (d.status !== 'ok') return null; const ms = [...new Set(d.data.map((r) => r.mes))].sort(); const c = ms.filter(gzCompleto); return c.length ? c[c.length - 1] : ms[ms.length - 1]; };
+window.gzSort = window.gzSort || {key: 'total', dir: -1};
+window.gzAll = () => ['mes','f-mes','f-total','f-var','f-lider','f-lider-v','k-total','k-total-var','k-ped','k-ped-var','k-tk','k-apps','chart','tbody','alertas'].forEach((n) => dash.draw(n));
+
+dash.calc('rede', {
+  title: 'Rede por mês',
+  description: 'Soma das unidades em cada mês: loja, iFood, 99Food, pedidos, ticket médio, participação dos apps e variação sobre o mês anterior.',
+  inputs: ['vendas'],
+  fn: (vendas) => {
+    const by = d3.rollups(vendas, (rs) => ({
+      loja: d3.sum(rs, (r) => +r.loja_valor), ifood: d3.sum(rs, (r) => +r.ifood_valor), f99: d3.sum(rs, (r) => +r.f99_valor),
+      total: d3.sum(rs, (r) => +r.total_valor), pedidos: d3.sum(rs, (r) => +r.total_pedidos)
+    }), (r) => r.mes).sort((a, b) => a[0] < b[0] ? -1 : 1);
+    return by.map(([mes, s], i) => {
+      const p = i > 0 ? by[i - 1][1] : null;
+      return {mes, loja: Math.round(s.loja), ifood: Math.round(s.ifood), f99: Math.round(s.f99), total: Math.round(s.total), pedidos: s.pedidos,
+        ticket: Math.round(s.total / s.pedidos * 100) / 100,
+        apps_pct: Math.round((s.ifood + s.f99) / s.total * 1000) / 10,
+        var_mm: p ? Math.round((s.total / p.total - 1) * 1000) / 10 : null,
+        var_pedidos: p ? Math.round((s.pedidos / p.pedidos - 1) * 1000) / 10 : null};
+    });
+  }
+});
+
+dash.calc('ranking', {
+  title: 'Unidades por mês',
+  description: 'Cada unidade em cada mês, com variação sobre o mês anterior, ticket, participação dos apps e os indicadores de avaliação, promoções e Instagram.',
+  inputs: ['vendas', 'unidades'],
+  fn: (vendas, unidades) => {
+    const info = new Map(unidades.map((u) => [u.unidade, u]));
+    const num = (x) => (x === null || x === undefined || x === '') ? null : +x;
+    const rows = vendas.map((r) => ({...r})).sort((a, b) => a.unidade.localeCompare(b.unidade) || (a.mes < b.mes ? -1 : 1));
+    return rows.map((r, i) => {
+      const prev = i > 0 && rows[i - 1].unidade === r.unidade ? rows[i - 1] : null;
+      const u = info.get(r.unidade) || {};
+      const total = Math.round(+r.total_valor), ped = +r.total_pedidos;
+      const apps = +r.ifood_valor + +r.f99_valor;
+      return {unidade: r.unidade, mes: r.mes, total, pedidos: ped,
+        var_mm: prev && +prev.total_valor > 0 ? Math.round((+r.total_valor / +prev.total_valor - 1) * 1000) / 10 : null,
+        ticket: ped ? Math.round(+r.total_valor / ped * 100) / 100 : null,
+        apps_pct: Math.round(apps / +r.total_valor * 1000) / 10,
+        promo_ifood: num(u.promocoes_ifood_out_pct), nota_google: num(u.nota_google), nota_ifood: num(u.nota_ifood), posts_out: num(u.posts_instagram_out)};
+    });
+  }
+});
+
+window.gzRede = () => { const d = dash.data('rede'); return d.status === 'ok' ? d.data.find((r) => r.mes === gzMes) : null; };
+window.gzUnid = () => { const d = dash.data('ranking'); return d.status === 'ok' ? d.data.filter((r) => r.mes === gzMes) : null; };
+window.gzAlertas = (r) => {
+  const a = [];
+  if (r.var_mm != null && r.var_mm <= -10 && gzCompleto(gzMes)) a.push('faturamento ' + gzP(r.var_mm) + ' sobre o mês anterior');
+  if (r.nota_google != null && r.nota_google < 4.5) a.push('nota ' + gzL.format(',.1f')(r.nota_google) + ' no Google');
+  if (r.promo_ifood != null && r.promo_ifood > 18) a.push('promoções em ' + gzP0(r.promo_ifood) + ' das vendas do iFood');
+  if (r.posts_out != null && r.posts_out < 4) a.push(r.posts_out + (r.posts_out === 1 ? ' post' : ' posts') + ' no Instagram em outubro');
+  return a;
+};
+</script>
+
+<script>
+const setWhere = (el, rec) => { el.setAttribute('data-where', 'mes=' + encodeURIComponent(rec.mes)); };
+const cell = (name, src, fmt, field, cls) => dash.draw(name, (el) => {
+  const r = src === 'rede' ? gzRede() : null;
+  el.classList.remove('dash-skeleton', 'gz-up', 'gz-down');
+  if (!r || r[field] == null) { el.textContent = '—'; if (dash.data(src).status === 'loading') el.classList.add('dash-skeleton'); return; }
+  setWhere(el, r);
+  el.textContent = fmt(r[field]);
+  if (cls) el.classList.add(r[field] >= 0 ? 'gz-up' : 'gz-down');
+});
+cell('f-total', 'rede', gzR, 'total');
+cell('f-var', 'rede', gzP, 'var_mm', true);
+cell('k-total', 'rede', gzR, 'total');
+cell('k-total-var', 'rede', gzP, 'var_mm', true);
+cell('k-ped', 'rede', gzN, 'pedidos');
+cell('k-ped-var', 'rede', gzP, 'var_pedidos', true);
+cell('k-tk', 'rede', gzR2, 'ticket');
+cell('k-apps', 'rede', gzP0, 'apps_pct');
+
+dash.draw('f-mes', (el) => { el.textContent = gzMes ? gzNomeMes(gzMes) : '—'; });
+dash.draw('f-nota', (el) => {
+  const d = dash.data('vendas'); if (d.status !== 'ok') { el.textContent = ''; return; }
+  const ms = [...new Set(d.data.map((r) => r.mes))].sort(), u = ms[ms.length - 1];
+  el.textContent = gzCompleto(u) ? '' : gzMeses[+u.slice(5) - 1].replace(/^./, (c) => c.toUpperCase()) + ' vai só até ' + String(gzDias(u)).padStart(2, '0') + '/' + u.slice(5) + ' (mês em andamento).';
+});
+
+const lider = () => { const u = gzUnid(); return u && u.length ? u.slice().sort((a, b) => b.total - a.total)[0] : null; };
+dash.draw('f-lider', (el) => { const l = lider(); if (!l) { el.textContent = '—'; return; } el.setAttribute('data-where', 'unidade=' + encodeURIComponent(l.unidade) + '&mes=' + encodeURIComponent(l.mes)); el.textContent = l.unidade; });
+dash.draw('f-lider-v', (el) => { const l = lider(); if (!l) { el.textContent = '—'; return; } el.setAttribute('data-where', 'unidade=' + encodeURIComponent(l.unidade) + '&mes=' + encodeURIComponent(l.mes)); el.textContent = gzR(l.total); });
+
+dash.draw('mes', (sel) => {
+  const d = dash.data('rede');
+  const meses = d.status === 'ok' ? d.data.map((r) => r.mes) : [gzMes];
+  sel.replaceChildren(...meses.map((m) => new Option(gzNomeMes(m).replace(/^./, (c) => c.toUpperCase()) + ' de 2026', m)));
+  sel.value = gzMes;
+  sel.onchange = () => { window.gzMes = sel.value; gzAll(); };
+});
+
+['sw0', 'sw1', 'sw2'].forEach((n, i) => dash.draw(n, (el) => { el.style.background = dash.colors[i]; }));
+</script>
+
+<script>
+dash.draw('chart', (el) => {
+  const d = dash.data('rede');
+  el.replaceChildren();
+  if (d.status === 'loading') { el.classList.add('dash-skeleton'); return; }
+  el.classList.remove('dash-skeleton');
+  if (d.status !== 'ok') { const p = document.createElement('p'); p.className = 'gz-note'; p.textContent = d.status === 'error' ? 'Não foi possível carregar o gráfico.' : '—'; el.append(p); return; }
+  const data = d.data, keys = ['loja', 'ifood', 'f99'], nomes = {loja: 'Loja', ifood: 'iFood', f99: '99Food'};
+  const W = el.clientWidth || 600, H = 300, m = {t: 20, r: 8, b: 28, l: 64};
+  const x = d3.scaleBand().domain(data.map((r) => r.mes)).range([m.l, W - m.r]).padding(0.25);
+  const y = d3.scaleLinear().domain([0, d3.max(data, (r) => r.total) * 1.08]).nice().range([H - m.b, m.t]);
+  const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('role', 'img')
+    .attr('aria-label', 'Barras empilhadas do faturamento mensal da rede em 2026, separadas em loja, iFood e 99Food');
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - m.l - m.r)).tickFormat((v) => v >= 1e6 ? 'R$ ' + gzL.format(',.1f')(v / 1e6) + ' mi' : 'R$ ' + gzL.format(',.0f')(v / 1e3) + ' mil'))
+    .call((g) => g.select('.domain').remove()).call((g) => g.selectAll('line').style('stroke', 'var(--cds-chart-grid)'));
+  const ab = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).tickSize(0).tickPadding(8).tickFormat((mm) => ab[+mm.slice(5) - 1]))
+    .call((g) => g.select('.domain').style('stroke', 'var(--cds-chart-axis)'));
+  const st = d3.stack().keys(keys)(data);
+  const tip = d3.select(el).append('div').attr('class', 'gz-tip').style('display', 'none');
+  st.forEach((s, i) => {
+    svg.append('g').selectAll('rect').data(s).join('rect')
+      .attr('x', (p) => x(p.data.mes)).attr('width', x.bandwidth())
+      .attr('y', (p) => y(p[1])).attr('height', (p) => Math.max(0, y(p[0]) - y(p[1])))
+      .style('fill', dash.colors[i]).style('opacity', (p) => p.data.mes === gzMes ? 1 : 0.55)
+      .on('pointermove', (ev, p) => {
+        const r = p.data, [px, py] = d3.pointer(ev, el);
+        tip.style('display', null).style('left', Math.min(px + 12, W - 190) + 'px').style('top', (py - 10) + 'px');
+        tip.selectAll('*').remove();
+        tip.append('div').style('font-weight', '600').text(gzNomeMes(r.mes) + ': ' + gzR(r.total));
+        keys.forEach((k) => tip.append('div').text(nomes[k] + ': ' + gzR(r[k])));
+      })
+      .on('pointerleave', () => tip.style('display', 'none'))
+      .on('click', (ev, p) => { window.gzMes = p.data.mes; gzAll(); });
+  });
+});
+</script>
+
+<script>
+dash.draw('tbody', (tb) => {
+  const u = gzUnid();
+  tb.replaceChildren();
+  const st = dash.data('ranking').status;
+  if (!u) { const tr = tb.insertRow(), td = tr.insertCell(); td.colSpan = 10; td.textContent = st === 'error' ? 'Não foi possível carregar a tabela.' : '—'; return; }
+  const {key, dir} = gzSort;
+  const rows = u.slice().sort((a, b) => {
+    const va = a[key], vb = b[key];
+    if (va == null) return 1; if (vb == null) return -1;
+    return (typeof va === 'string' ? va.localeCompare(vb) : va - vb) * dir;
+  });
+  const f1 = (v) => v == null ? '—' : gzL.format(',.1f')(v);
+  rows.forEach((r) => {
+    const tr = tb.insertRow();
+    tr.setAttribute('data-key', encodeURIComponent(r.unidade) + ',' + encodeURIComponent(r.mes));
+    const al = gzAlertas(r).length;
+    const c0 = tr.insertCell(); const dot = document.createElement('i');
+    dot.className = 'gz-dot ' + (al === 0 ? 'gz-ok' : al === 1 ? 'gz-warn' : 'gz-bad');
+    dot.setAttribute('aria-label', al === 0 ? 'sem alertas' : al + (al === 1 ? ' alerta' : ' alertas'));
+    c0.append(dot, document.createTextNode(r.unidade));
+    const vals = [gzR(r.total), gzP(r.var_mm), gzN(r.pedidos), r.ticket == null ? '—' : gzR2(r.ticket), gzP0(r.apps_pct),
+      r.promo_ifood == null ? '—' : gzP0(r.promo_ifood), f1(r.nota_google), f1(r.nota_ifood), r.posts_out == null ? '—' : String(r.posts_out)];
+    vals.forEach((v, i) => { const td = tr.insertCell(); td.textContent = v; if (i === 1 && r.var_mm != null) td.className = r.var_mm >= 0 ? 'gz-up' : 'gz-down'; });
+  });
+  tb.closest('table').querySelectorAll('th[data-sort]').forEach((th) => {
+    th.setAttribute('aria-sort', th.dataset.sort === key ? (dir > 0 ? 'ascending' : 'descending') : 'none');
+    th.onclick = () => { window.gzSort = {key: th.dataset.sort, dir: gzSort.key === th.dataset.sort ? -gzSort.dir : (th.dataset.sort === 'unidade' ? 1 : -1)}; dash.draw('tbody'); };
+  });
+});
+
+dash.draw('alertas', (ul) => {
+  const u = gzUnid();
+  ul.replaceChildren();
+  if (!u) { const li = document.createElement('li'); li.textContent = '—'; ul.append(li); return; }
+  const lst = u.map((r) => [r, gzAlertas(r)]).filter(([, a]) => a.length).sort((a, b) => b[1].length - a[1].length);
+  if (!lst.length) { const li = document.createElement('li'); li.textContent = 'Nenhuma unidade com alerta neste mês.'; ul.append(li); return; }
+  lst.forEach(([r, a]) => {
+    const li = document.createElement('li');
+    const b = document.createElement('b'); b.textContent = r.unidade + ': ';
+    li.append(b, document.createTextNode(a.join('; ') + '.'));
+    ul.append(li);
+  });
+});
+</script>
+<script src="tv.js"></script>
+<script src="tv2.js"></script>
+
+</div>
+</body>
+</html>
